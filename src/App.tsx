@@ -1,16 +1,12 @@
-import React, { useEffect, useState } from "react";
-import logo from "./logo.svg";
+import React, { Fragment, useEffect, useMemo, useState } from "react";
 import "./App.css";
 import Airtable from "airtable";
+import { CreateItem, Item } from "./models";
+import { EditDialog } from "./EditDialog";
+import { Table } from "./Table";
+import { CreateDialog } from "./CreateDialog";
+import { CheckoutDialog } from "./CheckoutDialog";
 
-interface Item {
-  id?: string;
-  bidNumber: number;
-  itemNumber: string;
-  itemDescription: string;
-  price: number;
-  paid: boolean;
-}
 Airtable.configure({
   endpointUrl: "https://api.airtable.com",
   apiKey: process.env.REACT_APP_AIRTABLE_APIKEY,
@@ -18,6 +14,36 @@ Airtable.configure({
 
 function App() {
   const [items, setItems] = useState<Item[]>([]);
+
+  const columns = useMemo(() => {
+    return [
+      {
+        Header: "Items",
+        columns: [
+          {
+            Header: "Bid Number",
+            accessor: "bidNumber",
+          },
+          {
+            Header: "Item Number",
+            accessor: "itemNumber",
+          },
+          {
+            Header: "Item Description",
+            accessor: "itemDescription",
+          },
+          {
+            Header: "Price",
+            accessor: "price",
+          },
+          {
+            Header: "Paid",
+            accessor: "paid",
+          },
+        ],
+      },
+    ];
+  }, []);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -71,6 +97,8 @@ function App() {
         paid: result.get("paid") as boolean,
       },
     ]);
+
+    setShowCreateDialog(false);
   };
 
   const deleteItem = async (item: Item) => {
@@ -81,73 +109,143 @@ function App() {
     setItems((items) => items.filter((i) => i.id !== item.id));
   };
 
-  return (
-    <div className="App">
-      <header className="App-header">
-        <h1 className="text-3xl font-bold underline">Hello world!</h1>
-        <Create onAdd={onItemAdded}></Create>
-        {items.map((item) => (
-          <div key={item.id}>
-            <p>
-              {item.bidNumber} - {item.itemNumber} - {item.itemDescription}
-            </p>
-            <p>{item.price}</p>
-            <p>{item.paid ? "paid" : "not paid"}</p>
-            <button onClick={() => deleteItem(item)}>Delete</button>
-          </div>
-        ))}
-      </header>
-    </div>
-  );
-}
+  const [isOpen, setIsOpen] = useState(false);
+  const onClose = () => setIsOpen(false);
 
-type CreateItem = Omit<Item, "id" | "paid">;
-interface CreateProps {
-  onAdd: (item: CreateItem) => void;
-}
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const onAddNewItem = () => {
+    setShowCreateDialog(true);
+  };
 
-const Create: React.FC<CreateProps> = (props) => {
-  const [bidNumber, setBidNumber] = useState<number>(0);
-  const [itemNumber, setItemNumber] = useState("");
-  const [itemDescription, setItemDescription] = useState("");
-  const [price, setPrice] = useState<number>(0);
+  const closeCreateDialog = () => setShowCreateDialog(false);
 
-  return (
-    <div>
-      <input
-        type="number"
-        placeholder="Bid Number"
-        onChange={(e) => setBidNumber(Number(e.target.value))}
-      />
-      <input
-        type="text"
-        placeholder="Item Number"
-        onChange={(e) => setItemNumber(e.target.value)}
-      />
-      <input
-        type="text"
-        placeholder="Item Description"
-        onChange={(e) => setItemDescription(e.target.value)}
-      />
-      <input
-        type="number"
-        placeholder="Price"
-        onChange={(e) => setPrice(Number(e.target.value))}
-      />
-      <button
-        onClick={() =>
-          props.onAdd({
-            bidNumber,
-            itemNumber,
-            itemDescription,
-            price,
-          })
+  const [editItem, setEditItem] = useState<Item>();
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const onEditItem = (item: Item) => {
+    setShowEditDialog(true);
+    setEditItem(item);
+  };
+
+  const saveEdit = async (editItems: Item[]) => {
+    const base = Airtable.base("app1gjuCkFPG0GFrC");
+    try {
+      const updates = editItems.map((i) => {
+        return {
+          id: i.id,
+          fields: {
+            bidNumber: i.bidNumber,
+            itemNumber: i.itemNumber,
+            itemDescription: i.itemDescription,
+            price: i.price,
+            paid: i.paid,
+          },
+        };
+      });
+      await base.table("Table 1").update(updates);
+      const existingItems = [...items];
+      for (let i = 0; i < existingItems.length; i++) {
+        for (let j = 0; j < editItems.length; j++) {
+          if (existingItems[i].id === editItems[j].id) {
+            existingItems[i] = editItems[j];
+            break;
+          }
         }
-      >
-        Add
-      </button>
-    </div>
+      }
+
+      setItems(existingItems);
+      closeEditDialog();
+      closeCheckoutDialog();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const closeEditDialog = () => {
+    setShowEditDialog(false);
+    setEditItem(undefined);
+  };
+
+  let editDialog = <></>;
+  if (editItem) {
+    editDialog = (
+      <EditDialog
+        item={editItem}
+        show={showEditDialog}
+        onSave={(item) => saveEdit([item])}
+        onClose={closeEditDialog}
+      ></EditDialog>
+    );
+  }
+
+  const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
+  const [checkoutBidder, setCheckoutBidder] = useState<number>();
+  const [checkoutItems, setCheckoutItems] = useState<Item[]>([]);
+  const onCheckout = () => {
+    const bidderItems = items.filter((i) => i.bidNumber === checkoutBidder);
+    console.log(bidderItems);
+    setCheckoutItems(bidderItems);
+    setShowCheckoutDialog(true);
+  };
+
+  const closeCheckoutDialog = () => {
+    setShowCheckoutDialog(false);
+  };
+
+  const onItemPaidToggled = (id: string, paid: boolean) => {
+    const items = [...checkoutItems];
+    const item = items.find((i) => i.id === id);
+    if (item) {
+      item.paid = paid;
+    }
+    setCheckoutItems(items);
+  };
+
+  const saveCheckout = () => {
+    saveEdit(checkoutItems);
+  };
+
+  return (
+    <>
+      <div className="min-h-screen bg-gray-100 text-gray-900">
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="">
+            <button onClick={onAddNewItem}>+</button>
+            <div>
+              <input
+                value={checkoutBidder}
+                onChange={(e) => setCheckoutBidder(Number(e.target.value))}
+              />
+              <button onClick={onCheckout}>checkout</button>
+            </div>
+            <h1 className="text-xl font-semibold">
+              React Table + Tailwind CSS = ❤
+            </h1>
+          </div>
+          <div className="mt-6">
+            <Table
+              columns={columns}
+              data={items}
+              onDelete={deleteItem}
+              onEdit={onEditItem}
+            />
+          </div>
+        </main>
+      </div>
+      <CheckoutDialog
+        items={checkoutItems}
+        show={showCheckoutDialog}
+        onSave={saveCheckout}
+        onClose={closeCheckoutDialog}
+        itemPaidToggled={onItemPaidToggled}
+      ></CheckoutDialog>
+      <CreateDialog
+        show={showCreateDialog}
+        onClose={closeCreateDialog}
+        onSave={onItemAdded}
+      ></CreateDialog>
+      {editDialog}
+    </>
   );
-};
+}
 
 export default App;
