@@ -81,7 +81,7 @@ export const CheckoutDialog: React.FC<CheckoutProps> = (props) => {
                   <div className="flex flex-col">
                     {props.items.map((item) => (
                       <div key={item.id}>
-                        <div className="flex">
+                        <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
                             checked={item.paid}
@@ -95,7 +95,10 @@ export const CheckoutDialog: React.FC<CheckoutProps> = (props) => {
                         </div>
                       </div>
                     ))}
-                    <div className="ml-auto">${totalDue}</div>
+                    <div className="py-2">
+                      <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="ml-auto">total due: ${totalDue}</div>
                   </div>
                 }
               </div>
