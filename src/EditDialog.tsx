@@ -1,6 +1,8 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useState } from "react";
 import { Item } from "./models";
+import CurrencyFormat from "react-currency-format";
+import { inputClass } from "./App";
 
 interface EditProps {
   item: Item;
@@ -30,8 +32,6 @@ export const EditDialog: React.FC<EditProps> = (props) => {
       paid,
     });
   };
-  const inputClass =
-    "lg:flex items-center text-sm leading-6 text-slate-400 rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3 hover:ring-slate-300 dark:highlight-white/5";
 
   return (
     <Transition appear show={props.show} as={Fragment}>
@@ -73,10 +73,9 @@ export const EditDialog: React.FC<EditProps> = (props) => {
               <Dialog.Title as="h3" className="text-lg font-medium leading-6">
                 Edit Item
               </Dialog.Title>
-              <div className="mt-2">
+              <div className="mt-2 flex flex-col gap-2">
                 <input
                   className={inputClass}
-                  type="number"
                   placeholder="Bid Number"
                   value={bidNumber}
                   onChange={(e) => setBidNumber(Number(e.target.value))}
@@ -95,13 +94,31 @@ export const EditDialog: React.FC<EditProps> = (props) => {
                   value={itemDescription}
                   onChange={(e) => setItemDescription(e.target.value)}
                 />
-                <input
+                <CurrencyFormat
                   className={inputClass}
-                  type="number"
                   placeholder="Price"
                   value={price}
-                  onChange={(e) => setPrice(Number(e.target.value))}
+                  displayType={"input"}
+                  thousandSeparator={true}
+                  prefix={"$"}
+                  decimalScale={2}
+                  onValueChange={(values) => {
+                    const { value } = values;
+                    setPrice(+value);
+                  }}
                 />
+                <div>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={paid}
+                      onChange={() => setPaid(!paid)}
+                    />
+                    <span className="ml-2 text-sm leading-5 font-medium text-gray-700">
+                      Paid
+                    </span>
+                  </label>
+                </div>
               </div>
 
               <div className="mt-4">

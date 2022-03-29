@@ -6,11 +6,15 @@ import { EditDialog } from "./EditDialog";
 import { Table } from "./Table";
 import { CreateDialog } from "./CreateDialog";
 import { CheckoutDialog } from "./CheckoutDialog";
+import CurrencyFormat from "react-currency-format";
 
 Airtable.configure({
   endpointUrl: "https://api.airtable.com",
   apiKey: process.env.REACT_APP_AIRTABLE_APIKEY,
 });
+
+export const inputClass =
+  "lg:flex items-center text-sm leading-6 text-slate-400 rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3 hover:ring-slate-300 dark:highlight-white/5";
 
 const PaidCell = ({ value }: any) => {
   return (
@@ -22,6 +26,20 @@ const PaidCell = ({ value }: any) => {
     />
   );
 };
+
+const PriceCell = ({ value }: any) => {
+  return (
+    <CurrencyFormat
+      className="text-sm text-gray-500"
+      value={value}
+      displayType={"text"}
+      thousandSeparator={true}
+      prefix={"$"}
+      decimalScale={2}
+    />
+  );
+};
+
 function App() {
   const [items, setItems] = useState<Item[]>([]);
 
@@ -45,6 +63,7 @@ function App() {
           {
             Header: "Price",
             accessor: "price",
+            Cell: PriceCell,
           },
           {
             Header: "Paid",
@@ -219,18 +238,34 @@ function App() {
     <>
       <div className="min-h-screen bg-gray-100 text-gray-900">
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="">
-            <button onClick={onAddNewItem}>+</button>
-            <div>
+          <div className="flex items-center justify-between">
+            <button
+              className="px-4 py-2 font-semibold text-sm bg-cyan-500 text-white rounded-full shadow-sm"
+              onClick={onAddNewItem}
+            >
+              + Add Item
+            </button>
+            <div className="flex">
               <input
+                className="lg:flex items-center text-sm leading-6 text-slate-400 rounded-l-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3 hover:ring-slate-300 dark:highlight-white/5 w-12"
                 value={checkoutBidder}
                 onChange={(e) => setCheckoutBidder(Number(e.target.value))}
               />
-              <button onClick={onCheckout}>checkout</button>
+              <button
+                className="px-4 py-2 font-semibold text-sm bg-cyan-500 text-white rounded-none shadow-sm rounded-r-md"
+                onClick={onCheckout}
+              >
+                <div className="flex gap-2">
+                  <img
+                    width={20}
+                    height={20}
+                    src={require("./checkout.png")}
+                    alt="checkout"
+                  />
+                  <span>Checkout</span>
+                </div>
+              </button>
             </div>
-            <h1 className="text-xl font-semibold">
-              React Table + Tailwind CSS = ❤
-            </h1>
           </div>
           <div className="mt-6">
             <Table

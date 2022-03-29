@@ -1,7 +1,8 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useState } from "react";
 import { CreateItem } from "./models";
-import CurrencyInput from 'react-currency-masked-input'
+import CurrencyFormat from "react-currency-format";
+import { inputClass } from "./App";
 
 export interface CreateDialogProps {
   show: boolean;
@@ -23,16 +24,28 @@ export const CreateDialog: React.FC<CreateDialogProps> = (props) => {
       price,
       paid,
     });
+    reset();
   };
-  const inputClass =
-    "lg:flex items-center text-sm leading-6 text-slate-400 rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3 hover:ring-slate-300 dark:highlight-white/5";
+
+  const reset = () => {
+    setTimeout(() => {
+      setBidNumber(undefined);
+      setItemNumber("");
+      setItemDescription("");
+      setPrice(undefined);
+      setPaid(false);
+    }, 500);
+  };
 
   return (
     <Transition appear show={props.show} as={Fragment}>
       <Dialog
         as="div"
         className="fixed inset-0 z-10 overflow-y-auto"
-        onClose={props.onClose}
+        onClose={() => {
+          props.onClose();
+          reset();
+        }}
       >
         <div className="min-h-screen px-4 text-center backdrop-blur-sm">
           <Transition.Child
@@ -67,7 +80,7 @@ export const CreateDialog: React.FC<CreateDialogProps> = (props) => {
               <Dialog.Title as="h3" className="text-lg font-medium leading-6">
                 Add New Item
               </Dialog.Title>
-              <div className="mt-2">
+              <div className="mt-2 flex flex-col gap-2">
                 <input
                   className={inputClass}
                   placeholder="Bid Number"
@@ -88,12 +101,18 @@ export const CreateDialog: React.FC<CreateDialogProps> = (props) => {
                   value={itemDescription}
                   onChange={(e) => setItemDescription(e.target.value)}
                 />
-                <input
+                <CurrencyFormat
                   className={inputClass}
-                  type="number"
                   placeholder="Price"
                   value={price}
-                  onChange={(e) => setPrice(Number(e.target.value))}
+                  displayType={"input"}
+                  thousandSeparator={true}
+                  prefix={"$"}
+                  decimalScale={2}
+                  onValueChange={(values) => {
+                    const { value } = values;
+                    setPrice(+value);
+                  }}
                 />
               </div>
 
