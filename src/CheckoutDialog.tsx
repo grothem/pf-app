@@ -78,7 +78,7 @@ export const CheckoutDialog: React.FC<CheckoutProps> = (props) => {
               <div className="mt-2">
                 {noItemsView}
                 {
-                  <div className="flex flex-col">
+                  <div className="flex flex-col gap-2">
                     {props.items.map((item) => (
                       <div key={item.id}>
                         <div className="flex items-center gap-2">

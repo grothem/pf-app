@@ -90,13 +90,13 @@ export const Table: React.FC<TableProps> = ({
                         );
                       })}
                       <button
-                        className="rounded-full"
+                        className="m-2 px-4 py-2 font-semibold text-sm bg-cyan-500 text-white rounded-full shadow-sm"
                         onClick={(e) => onEdit(row.original)}
                       >
                         Edit
                       </button>
                       <button
-                        className="rounded-full"
+                        className="m-2 px-4 py-2 font-semibold text-sm bg-red-500 text-white rounded-full shadow-sm"
                         onClick={(e) => onDelete(row.original)}
                       >
                         Delete
