@@ -40,6 +40,12 @@ const PriceCell = ({ value }: any) => {
   );
 };
 
+const DescriptionCell = ({ value }: any) => {
+  return (
+    <p className="max-w-sm text-sm text-gray-500 whitespace-normal">{value}</p>
+  );
+};
+
 function App() {
   const [items, setItems] = useState<Item[]>([]);
 
@@ -59,6 +65,7 @@ function App() {
           {
             Header: "Item Description",
             accessor: "itemDescription",
+            Cell: DescriptionCell,
           },
           {
             Header: "Price",
@@ -237,7 +244,7 @@ function App() {
   return (
     <>
       <div className="min-h-screen bg-gray-100 text-gray-900">
-        <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <main className="max-w-6xl mx-auto px-4 pt-4">
           <div className="flex items-center justify-between">
             <button
               className="px-4 py-2 font-semibold text-sm bg-cyan-500 text-white rounded-full shadow-sm"
