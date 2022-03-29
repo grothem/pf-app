@@ -30,7 +30,8 @@ export const CheckoutDialog: React.FC<CheckoutProps> = (props) => {
   }
 
   const totalDue = props.items.reduce((acc, item) => {
-    const price = item.paid ? 0 : item.price;
+    let itemPrice = item.price ?? 0;
+    const price = item.paid ? 0 : itemPrice;
     return acc + price;
   }, 0);
 

@@ -1,9 +1,9 @@
 export interface Item {
   id: string;
-  bidNumber: number;
+  bidNumber?: number;
   itemNumber: string;
   itemDescription: string;
-  price: number;
+  price?: number;
   paid: boolean;
 }
 

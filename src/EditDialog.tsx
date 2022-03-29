@@ -10,12 +10,14 @@ interface EditProps {
 }
 export const EditDialog: React.FC<EditProps> = (props) => {
   const item = props.item;
-  const [bidNumber, setBidNumber] = useState<number>(item.bidNumber);
+  const [bidNumber, setBidNumber] = useState<number | undefined>(
+    item.bidNumber
+  );
   const [itemNumber, setItemNumber] = useState<string>(item.itemNumber);
   const [itemDescription, setItemDescription] = useState<string>(
     item.itemDescription
   );
-  const [price, setPrice] = useState<number>(item.price);
+  const [price, setPrice] = useState<number | undefined>(item.price);
   const [paid, setPaid] = useState<boolean>(item.paid);
 
   const onSaveClick = () => {

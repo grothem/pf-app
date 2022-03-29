@@ -1,6 +1,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useState } from "react";
 import { CreateItem } from "./models";
+import CurrencyInput from 'react-currency-masked-input'
 
 export interface CreateDialogProps {
   show: boolean;
@@ -8,10 +9,10 @@ export interface CreateDialogProps {
   onClose: () => void;
 }
 export const CreateDialog: React.FC<CreateDialogProps> = (props) => {
-  const [bidNumber, setBidNumber] = useState<number>(0);
+  const [bidNumber, setBidNumber] = useState<number>();
   const [itemNumber, setItemNumber] = useState("");
   const [itemDescription, setItemDescription] = useState("");
-  const [price, setPrice] = useState<number>(0);
+  const [price, setPrice] = useState<number>();
   const [paid, setPaid] = useState<boolean>(false);
 
   const onSaveClick = () => {
@@ -69,7 +70,6 @@ export const CreateDialog: React.FC<CreateDialogProps> = (props) => {
               <div className="mt-2">
                 <input
                   className={inputClass}
-                  type="number"
                   placeholder="Bid Number"
                   value={bidNumber}
                   onChange={(e) => setBidNumber(Number(e.target.value))}

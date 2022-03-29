@@ -12,6 +12,16 @@ Airtable.configure({
   apiKey: process.env.REACT_APP_AIRTABLE_APIKEY,
 });
 
+const PaidCell = ({ value }: any) => {
+  return (
+    <input
+      className="checked:bg-blue-300 cursor-not-allowed"
+      type="checkbox"
+      checked={value}
+      disabled={true}
+    />
+  );
+};
 function App() {
   const [items, setItems] = useState<Item[]>([]);
 
@@ -39,6 +49,7 @@ function App() {
           {
             Header: "Paid",
             accessor: "paid",
+            Cell: PaidCell,
           },
         ],
       },
