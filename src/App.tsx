@@ -261,6 +261,13 @@ function App() {
     setItemForDelete(undefined);
   };
 
+  const totalAmountPaid = () => {
+    const total = items.reduce((acc, i) => {
+      const price = i.price ?? 0;
+      return acc + (i.paid ? price : 0);
+    }, 0);
+    return total;
+  };
   return (
     <>
       <div className="min-h-screen bg-gray-100 text-gray-900">
@@ -272,6 +279,7 @@ function App() {
             >
               + Add Item
             </button>
+            <div>Total Paid: ${totalAmountPaid()}</div>
             <div className="flex">
               <input
                 className="lg:flex items-center text-sm leading-6 text-slate-400 rounded-l-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3 hover:ring-slate-300 dark:highlight-white/5 w-12"
