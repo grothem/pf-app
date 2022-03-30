@@ -21,9 +21,6 @@ export const CheckoutDialog: React.FC<CheckoutProps> = (props) => {
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <h1 className="text-3xl font-bold">No items to checkout</h1>
-          <p className="text-lg">
-            Please add items to your cart before checking out.
-          </p>
         </div>
       </div>
     );

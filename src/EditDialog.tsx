@@ -78,7 +78,14 @@ export const EditDialog: React.FC<EditProps> = (props) => {
                   className={inputClass}
                   placeholder="Bid Number"
                   value={bidNumber}
-                  onChange={(e) => setBidNumber(Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    if (!value) {
+                      setBidNumber(undefined);
+                    } else {
+                      setBidNumber(Number(e.target.value));
+                    }
+                  }}
                 />
                 <input
                   className={inputClass}
@@ -104,7 +111,11 @@ export const EditDialog: React.FC<EditProps> = (props) => {
                   decimalScale={2}
                   onValueChange={(values) => {
                     const { value } = values;
-                    setPrice(+value);
+                    if (!value) {
+                      setPrice(undefined);
+                    } else {
+                      setPrice(+value);
+                    }
                   }}
                 />
                 <div>

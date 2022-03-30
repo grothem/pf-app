@@ -7,6 +7,7 @@ import { Table } from "./Table";
 import { CreateDialog } from "./CreateDialog";
 import { CheckoutDialog } from "./CheckoutDialog";
 import CurrencyFormat from "react-currency-format";
+import { Dialog, Transition } from "@headlessui/react";
 
 Airtable.configure({
   endpointUrl: "https://api.airtable.com",
@@ -21,13 +22,17 @@ const PaidCell = ({ value }: any) => {
     <input
       className="checked:bg-blue-300 cursor-not-allowed"
       type="checkbox"
-      checked={value}
+      checked={value ?? false}
       disabled={true}
     />
   );
 };
 
 const PriceCell = ({ value }: any) => {
+  if (value === undefined) {
+    return <></>;
+  }
+
   return (
     <CurrencyFormat
       className="text-sm text-gray-500"
@@ -138,17 +143,6 @@ function App() {
     setShowCreateDialog(false);
   };
 
-  const deleteItem = async (item: Item) => {
-    if (!item.id) return;
-
-    const base = Airtable.base("app1gjuCkFPG0GFrC");
-    await base.table("Table 1").destroy([item.id]);
-    setItems((items) => items.filter((i) => i.id !== item.id));
-  };
-
-  const [isOpen, setIsOpen] = useState(false);
-  const onClose = () => setIsOpen(false);
-
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const onAddNewItem = () => {
     setShowCreateDialog(true);
@@ -178,7 +172,8 @@ function App() {
           },
         };
       });
-      await base.table("Table 1").update(updates);
+      const result = await base.table("Table 1").replace(updates);
+      console.log(result);
       const existingItems = [...items];
       for (let i = 0; i < existingItems.length; i++) {
         for (let j = 0; j < editItems.length; j++) {
@@ -189,7 +184,17 @@ function App() {
         }
       }
 
-      setItems(existingItems);
+      const sorted = existingItems.sort((a, b) => {
+        if (+a.itemNumber > +b.itemNumber) {
+          return 1;
+        }
+        if (+a.itemNumber < +b.itemNumber) {
+          return -1;
+        }
+        return 0;
+      });
+
+      setItems(sorted);
       closeEditDialog();
       closeCheckoutDialog();
     } catch (e) {
@@ -241,6 +246,21 @@ function App() {
     saveEdit(checkoutItems);
   };
 
+  const [itemForDelete, setItemForDelete] = useState<Item>();
+  const setDeleteItem = (item: Item) => {
+    if (!item.id) return;
+    setItemForDelete(item);
+  };
+
+  const onConfirmDelete = async () => {
+    if (!itemForDelete) return;
+
+    const base = Airtable.base("app1gjuCkFPG0GFrC");
+    await base.table("Table 1").destroy([itemForDelete.id]);
+    setItems((items) => items.filter((i) => i.id !== itemForDelete.id));
+    setItemForDelete(undefined);
+  };
+
   return (
     <>
       <div className="min-h-screen bg-gray-100 text-gray-900">
@@ -278,7 +298,7 @@ function App() {
             <Table
               columns={columns}
               data={items}
-              onDelete={deleteItem}
+              onDelete={setDeleteItem}
               onEdit={onEditItem}
             />
           </div>
@@ -297,6 +317,66 @@ function App() {
         onSave={onItemAdded}
       ></CreateDialog>
       {editDialog}
+
+      <Transition appear show={itemForDelete !== undefined} as={Fragment}>
+        <Dialog
+          as="div"
+          className="fixed inset-0 z-10 overflow-y-auto"
+          onClose={() => setItemForDelete(undefined)}
+        >
+          <div className="min-h-screen px-4 text-center backdrop-blur-sm">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <Dialog.Overlay className="fixed inset-0" />
+            </Transition.Child>
+
+            {/* This element is to trick the browser into centering the modal contents. */}
+            <span
+              className="inline-block h-screen align-middle"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all bg-gray-100 transform shadow-xl rounded-2xl">
+                <Dialog.Title as="h3" className="text-lg font-medium leading-6">
+                  Delete?
+                </Dialog.Title>
+                <div className="mt-2">
+                  <p className="text-sm leading-5 text-gray-500">
+                    Are you sure you want to delete this item?
+                  </p>
+                </div>
+
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    className="group inline-flex items-center h-9 rounded-full text-sm font-semibold whitespace-nowrap px-3 focus:outline-none focus:ring-2 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 focus:ring-slate-500 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600 dark:hover:text-white dark:focus:ring-slate-500"
+                    onClick={onConfirmDelete}
+                  >
+                    Yes
+                  </button>
+                </div>
+              </div>
+            </Transition.Child>
+          </div>
+        </Dialog>
+      </Transition>
     </>
   );
 }
