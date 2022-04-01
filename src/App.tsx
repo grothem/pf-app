@@ -9,6 +9,8 @@ import { CheckoutDialog } from "./CheckoutDialog";
 import CurrencyFormat from "react-currency-format";
 import { Dialog, Transition } from "@headlessui/react";
 
+(window as any).netlifyIdentity.open();
+
 Airtable.configure({
   endpointUrl: "https://api.airtable.com",
   apiKey: process.env.REACT_APP_AIRTABLE_APIKEY,
