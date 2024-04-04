@@ -1,6 +1,5 @@
-import React, { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import "./App.css";
-import Airtable from "airtable";
 import { CreateItem, Item } from "./models";
 import { EditDialog } from "./EditDialog";
 import { Table } from "./Table";
@@ -9,10 +8,11 @@ import { CheckoutDialog } from "./CheckoutDialog";
 import CurrencyFormat from "react-currency-format";
 import { Dialog, Transition } from "@headlessui/react";
 
-Airtable.configure({
-  endpointUrl: "https://api.airtable.com",
-  apiKey: process.env.REACT_APP_AIRTABLE_APIKEY,
-});
+const token = process.env.REACT_APP_TOKEN as string;
+const base = process.env.REACT_APP_BASE as string;
+const table = process.env.REACT_APP_TABLE as string;
+
+const url = `https://api.airtable.com/v0/${base}/${table}`;
 
 export const inputClass =
   "lg:flex items-center text-sm leading-6 text-slate-400 rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3 hover:ring-slate-300 dark:highlight-white/5";
@@ -89,54 +89,62 @@ function App() {
 
   useEffect(() => {
     const fetchItems = async () => {
-      const base = Airtable.base("app1gjuCkFPG0GFrC");
-      base
-        .table("Table 1")
-        .select()
-        .eachPage((records, fetchNextPage) => {
-          console.log(records);
-          const items: Item[] = [];
-          records.forEach((record) => {
-            items.push({
-              id: record.id,
-              bidNumber: record.get("bidNumber") as number,
-              itemNumber: record.get("itemNumber") as string,
-              itemDescription: record.get("itemDescription") as string,
-              price: record.get("price") as number,
-              paid: record.get("paid") as boolean,
-            });
-          });
-          setItems(items);
+      const result = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await result.json();
+      const items: Item[] = [];
+      data.records.forEach((record: any) => {
+        items.push({
+          id: record.id,
+          bidNumber: record.fields.bidNumber,
+          itemNumber: record.fields.itemNumber,
+          itemDescription: record.fields.itemDescription,
+          price: record.fields.price,
+          paid: record.fields.paid,
         });
+      });
+      setItems(items);
     };
 
     fetchItems();
   }, []);
 
   const onItemAdded = async (item: CreateItem) => {
-    const base = Airtable.base("app1gjuCkFPG0GFrC");
-    const result = (
-      await base.table("Table 1").create([
-        {
-          fields: {
-            bidNumber: item.bidNumber,
-            itemNumber: item.itemNumber,
-            itemDescription: item.itemDescription,
-            price: item.price,
+    const result = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        records: [
+          {
+            fields: {
+              bidNumber: item.bidNumber,
+              itemNumber: item.itemNumber,
+              itemDescription: item.itemDescription,
+              price: item.price,
+            },
           },
-        },
-      ])
-    )[0];
+        ],
+      }),
+    });
 
+    const data = await result.json();
+    const record = data.records[0];
     setItems((items) => [
       ...items,
       {
-        id: result.id,
-        bidNumber: result.get("bidNumber") as number,
-        itemNumber: result.get("itemNumber") as string,
-        itemDescription: result.get("itemDescription") as string,
-        price: result.get("price") as number,
-        paid: result.get("paid") as boolean,
+        id: record.id,
+        bidNumber: record.fields.bidNumber,
+        itemNumber: record.fields.itemNumber,
+        itemDescription: record.fields.itemDescription,
+        price: record.fields.price,
+        paid: record.fields.paid,
       },
     ]);
 
@@ -158,22 +166,31 @@ function App() {
   };
 
   const saveEdit = async (editItems: Item[]) => {
-    const base = Airtable.base("app1gjuCkFPG0GFrC");
     try {
-      const updates = editItems.map((i) => {
-        return {
-          id: i.id,
-          fields: {
-            bidNumber: i.bidNumber,
-            itemNumber: i.itemNumber,
-            itemDescription: i.itemDescription,
-            price: i.price,
-            paid: i.paid,
-          },
-        };
+      const result = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          records: editItems.map((i) => {
+            return {
+              id: i.id,
+              fields: {
+                bidNumber: i.bidNumber,
+                itemNumber: i.itemNumber,
+                itemDescription: i.itemDescription,
+                price: i.price,
+                paid: i.paid,
+              },
+            };
+          }),
+        }),
       });
-      const result = await base.table("Table 1").replace(updates);
-      console.log(result);
+      const data = await result.json();
+      console.log(data);
+
       const existingItems = [...items];
       for (let i = 0; i < existingItems.length; i++) {
         for (let j = 0; j < editItems.length; j++) {
@@ -255,8 +272,16 @@ function App() {
   const onConfirmDelete = async () => {
     if (!itemForDelete) return;
 
-    const base = Airtable.base("app1gjuCkFPG0GFrC");
-    await base.table("Table 1").destroy([itemForDelete.id]);
+    const result = await fetch(`${url}/${itemForDelete.id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await result.json();
+    console.log(data);
+
     setItems((items) => items.filter((i) => i.id !== itemForDelete.id));
     setItemForDelete(undefined);
   };
